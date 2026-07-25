@@ -38,6 +38,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut input = String::new();
     let programs = get_programs();
+    let mut selected = 0;
 
     let gc = conn.generate_id()?;
 
@@ -97,6 +98,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     18 => input.push('9'),
                     19 => input.push('0'),
 
+                    // Arrow keys
+                    111 => {
+                        if selected > 0 {
+                            selected -= 1;
+                            draw(&conn, window, gc, &input, &programs, selected)?;
+                        }
+                    }
+                    116 => {
+                        selected += 1;
+                        draw(&conn, window, gc, &input, &programs, selected)?;
+                    }
                     // Other
                     65 => input.push(' '),
                     22 => {
@@ -107,7 +119,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     36 => {
                         let matches = filter_programs(&programs, &input);
 
-                        if let Some(program) = matches.first() {
+                        if let Some(program) = matches.get(selected) {
                             Command::new(program).spawn()?;
                         }
                         return Ok(());
@@ -118,11 +130,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     _ => {}
                 }
                 if old_input != input {
-                    draw(&conn, window, gc, &input, &programs)?;
+                    selected = 0;
+                    draw(&conn, window, gc, &input, &programs, selected)?;
                 }
             }
             Event::Expose(_) => {
-                draw(&conn, window, gc, &input, &programs)?;
+                draw(&conn, window, gc, &input, &programs, selected)?;
             }
             _ => {}
         }
@@ -134,6 +147,7 @@ fn draw(
     gc: Gcontext,
     input: &str,
     programs: &[String],
+    selected: usize,
 ) -> Result<(), Box<dyn std::error::Error>> {
     conn.clear_area(false, window, 0, 0, 0, 0)?;
 
@@ -145,7 +159,13 @@ fn draw(
     let matches = filter_programs(programs, input);
 
     for (i, program) in matches.iter().enumerate() {
-        conn.image_text8(window, gc, 10, 40 + (i as i16 * 18), program.as_bytes())?;
+        let text = if i == selected {
+            format!("> {}", program)
+        } else {
+            format!("  {}", program)
+        };
+
+        conn.image_text8(window, gc, 10, 40 + (i as i16 * 18), text.as_bytes())?;
     }
 
     conn.flush()?;
