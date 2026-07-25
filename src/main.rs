@@ -206,7 +206,7 @@ fn filter_programs(programs: &[String], input: &str) -> Vec<String> {
     let input_lower = input.to_lowercase();
     programs
         .iter()
-        .filter(|p| p.contains(&input_lower))
+        .filter(|p| p.to_lowercase().contains(&input_lower))
         .take(10)
         .cloned()
         .collect()
