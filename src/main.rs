@@ -106,8 +106,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     116 => {
-                        selected += 1;
-                        draw(&conn, window, gc, &input, &programs, selected)?;
+                        let matches = filter_programs(&programs, &input);
+
+                        if selected + 1 < matches.len() {
+                            selected += 1;
+                            draw(&conn, window, gc, &input, &programs, selected)?;
+                        }
                     }
                     // Other
                     65 => input.push(' '),
