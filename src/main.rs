@@ -1,3 +1,4 @@
+use std::process::Command;
 use x11rb::{
     COPY_FROM_PARENT, CURRENT_TIME, connect,
     connection::Connection,
@@ -98,10 +99,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         input.pop();
                     }
 
-                    // 36 => {
-                    // println!("Submitted: {}", input);
-                    // draw(&conn, window, gc, &input)?;
-                    // }
+                    36 => {
+                        Command::new(input).spawn()?;
+                        return Ok(());
+                    }
+                    9 => return Ok(()),
                     _ => {}
                 }
                 if old_input != input {
@@ -123,7 +125,10 @@ fn draw(
 ) -> Result<(), Box<dyn std::error::Error>> {
     conn.clear_area(false, window, 0, 0, 0, 0)?;
 
-    conn.image_text8(window, gc, 10, 18, input.as_bytes())?;
+    let cursor = "|";
+    let text = format!("{}{}", input, cursor);
+
+    conn.image_text8(window, gc, 10, 18, text.as_bytes())?;
 
     conn.flush()?;
 
