@@ -1,4 +1,8 @@
-use x11rb::{COPY_FROM_PARENT, connect, connection::Connection, protocol::xproto::*};
+use x11rb::{
+    COPY_FROM_PARENT, CURRENT_TIME, connect,
+    connection::Connection,
+    protocol::{Event, xproto::*},
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (conn, screen_num) = connect(None)?;
@@ -28,15 +32,93 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     conn.map_window(window)?;
     conn.flush()?;
 
+    conn.set_input_focus(InputFocus::PARENT, window, CURRENT_TIME)?;
+    conn.flush()?;
+
+    let mut input = String::new();
+
+    let gc = conn.generate_id()?;
+
+    conn.create_gc(
+        gc,
+        window,
+        &CreateGCAux::new().foreground(screen.white_pixel),
+    )?;
+
+    conn.flush()?;
+
     loop {
         let event = conn.wait_for_event()?;
 
         match event {
-            x11rb::protocol::Event::Expose(_) => {
-                conn.map_window(window)?;
-                conn.flush()?;
+            Event::KeyPress(ev) => match ev.detail {
+                38 => input.push('a'),
+                56 => input.push('b'),
+                54 => input.push('c'),
+                40 => input.push('d'),
+                26 => input.push('e'),
+                41 => input.push('f'),
+                42 => input.push('g'),
+                43 => input.push('h'),
+                31 => input.push('i'),
+                44 => input.push('j'),
+                45 => input.push('k'),
+                46 => input.push('l'),
+                58 => input.push('m'),
+                57 => input.push('n'),
+                32 => input.push('o'),
+                33 => input.push('p'),
+                24 => input.push('q'),
+                27 => input.push('r'),
+                39 => input.push('s'),
+                28 => input.push('t'),
+                30 => input.push('u'),
+                55 => input.push('v'),
+                25 => input.push('w'),
+                53 => input.push('x'),
+                29 => input.push('y'),
+                52 => input.push('z'),
+
+                10 => input.push('1'),
+                11 => input.push('2'),
+                12 => input.push('3'),
+                13 => input.push('4'),
+                14 => input.push('5'),
+                15 => input.push('6'),
+                16 => input.push('7'),
+                17 => input.push('8'),
+                18 => input.push('9'),
+                19 => input.push('0'),
+
+                65 => input.push(' '),
+                22 => {
+                    input.pop();
+                }
+
+                36 => {
+                    println!("Submitted: {}", input);
+                    draw(&conn, window, gc, &input)?;
+                }
+                _ => {}
+            },
+            Event::Expose(_) => {
+                draw(&conn, window, gc, &input)?;
             }
             _ => {}
         }
     }
+}
+fn draw(
+    conn: &impl Connection,
+    window: Window,
+    gc: Gcontext,
+    input: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    conn.clear_area(false, window, 0, 0, 0, 0)?;
+
+    conn.image_text8(window, gc, 10, 18, input.as_bytes())?;
+
+    conn.flush()?;
+
+    Ok(())
 }
