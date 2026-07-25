@@ -50,57 +50,64 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         let event = conn.wait_for_event()?;
 
+        let old_input = input.clone();
+
         match event {
-            Event::KeyPress(ev) => match ev.detail {
-                38 => input.push('a'),
-                56 => input.push('b'),
-                54 => input.push('c'),
-                40 => input.push('d'),
-                26 => input.push('e'),
-                41 => input.push('f'),
-                42 => input.push('g'),
-                43 => input.push('h'),
-                31 => input.push('i'),
-                44 => input.push('j'),
-                45 => input.push('k'),
-                46 => input.push('l'),
-                58 => input.push('m'),
-                57 => input.push('n'),
-                32 => input.push('o'),
-                33 => input.push('p'),
-                24 => input.push('q'),
-                27 => input.push('r'),
-                39 => input.push('s'),
-                28 => input.push('t'),
-                30 => input.push('u'),
-                55 => input.push('v'),
-                25 => input.push('w'),
-                53 => input.push('x'),
-                29 => input.push('y'),
-                52 => input.push('z'),
+            Event::KeyPress(ev) => {
+                match ev.detail {
+                    38 => input.push('a'),
+                    56 => input.push('b'),
+                    54 => input.push('c'),
+                    40 => input.push('d'),
+                    26 => input.push('e'),
+                    41 => input.push('f'),
+                    42 => input.push('g'),
+                    43 => input.push('h'),
+                    31 => input.push('i'),
+                    44 => input.push('j'),
+                    45 => input.push('k'),
+                    46 => input.push('l'),
+                    58 => input.push('m'),
+                    57 => input.push('n'),
+                    32 => input.push('o'),
+                    33 => input.push('p'),
+                    24 => input.push('q'),
+                    27 => input.push('r'),
+                    39 => input.push('s'),
+                    28 => input.push('t'),
+                    30 => input.push('u'),
+                    55 => input.push('v'),
+                    25 => input.push('w'),
+                    53 => input.push('x'),
+                    29 => input.push('y'),
+                    52 => input.push('z'),
 
-                10 => input.push('1'),
-                11 => input.push('2'),
-                12 => input.push('3'),
-                13 => input.push('4'),
-                14 => input.push('5'),
-                15 => input.push('6'),
-                16 => input.push('7'),
-                17 => input.push('8'),
-                18 => input.push('9'),
-                19 => input.push('0'),
+                    10 => input.push('1'),
+                    11 => input.push('2'),
+                    12 => input.push('3'),
+                    13 => input.push('4'),
+                    14 => input.push('5'),
+                    15 => input.push('6'),
+                    16 => input.push('7'),
+                    17 => input.push('8'),
+                    18 => input.push('9'),
+                    19 => input.push('0'),
 
-                65 => input.push(' '),
-                22 => {
-                    input.pop();
+                    65 => input.push(' '),
+                    22 => {
+                        input.pop();
+                    }
+
+                    // 36 => {
+                    // println!("Submitted: {}", input);
+                    // draw(&conn, window, gc, &input)?;
+                    // }
+                    _ => {}
                 }
-
-                36 => {
-                    println!("Submitted: {}", input);
+                if old_input != input {
                     draw(&conn, window, gc, &input)?;
                 }
-                _ => {}
-            },
+            }
             Event::Expose(_) => {
                 draw(&conn, window, gc, &input)?;
             }
