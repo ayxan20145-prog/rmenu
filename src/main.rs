@@ -203,9 +203,10 @@ fn get_programs() -> Vec<String> {
     programs
 }
 fn filter_programs(programs: &[String], input: &str) -> Vec<String> {
+    let input_lower = input.to_lowercase();
     programs
         .iter()
-        .filter(|p| p.starts_with(input))
+        .filter(|p| p.contains(&input_lower))
         .take(10)
         .cloned()
         .collect()
