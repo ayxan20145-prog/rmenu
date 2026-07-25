@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{env, fs, process::Command};
 use x11rb::{
     COPY_FROM_PARENT, CURRENT_TIME, connect,
     connection::Connection,
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         0,
         0,
         screen.width_in_pixels,
-        28,
+        210,
         0,
         WindowClass::INPUT_OUTPUT,
         0,
@@ -37,6 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     conn.flush()?;
 
     let mut input = String::new();
+    let programs = get_programs();
 
     let gc = conn.generate_id()?;
 
@@ -56,6 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match event {
             Event::KeyPress(ev) => {
                 match ev.detail {
+                    // Letters
                     38 => input.push('a'),
                     56 => input.push('b'),
                     54 => input.push('c'),
@@ -83,6 +85,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     29 => input.push('y'),
                     52 => input.push('z'),
 
+                    // Numbers
                     10 => input.push('1'),
                     11 => input.push('2'),
                     12 => input.push('3'),
@@ -94,24 +97,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     18 => input.push('9'),
                     19 => input.push('0'),
 
+                    // Other
                     65 => input.push(' '),
                     22 => {
                         input.pop();
                     }
 
+                    // Enter
                     36 => {
-                        Command::new(input).spawn()?;
+                        let matches = filter_programs(&programs, &input);
+
+                        if let Some(program) = matches.first() {
+                            Command::new(program).spawn()?;
+                        }
                         return Ok(());
                     }
+
+                    // Escape
                     9 => return Ok(()),
                     _ => {}
                 }
                 if old_input != input {
-                    draw(&conn, window, gc, &input)?;
+                    draw(&conn, window, gc, &input, &programs)?;
                 }
             }
             Event::Expose(_) => {
-                draw(&conn, window, gc, &input)?;
+                draw(&conn, window, gc, &input, &programs)?;
             }
             _ => {}
         }
@@ -122,6 +133,7 @@ fn draw(
     window: Window,
     gc: Gcontext,
     input: &str,
+    programs: &[String],
 ) -> Result<(), Box<dyn std::error::Error>> {
     conn.clear_area(false, window, 0, 0, 0, 0)?;
 
@@ -130,7 +142,47 @@ fn draw(
 
     conn.image_text8(window, gc, 10, 18, text.as_bytes())?;
 
+    let matches = filter_programs(programs, input);
+
+    for (i, program) in matches.iter().enumerate() {
+        conn.image_text8(window, gc, 10, 40 + (i as i16 * 18), program.as_bytes())?;
+    }
+
     conn.flush()?;
 
     Ok(())
+}
+fn get_programs() -> Vec<String> {
+    let mut programs = Vec::new();
+
+    if let Ok(path) = env::var("PATH") {
+        for dir in path.split(':') {
+            if let Ok(entries) = fs::read_dir(dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+
+                    if path.is_file() {
+                        if let Some(name) = path.file_name() {
+                            if let Some(name) = name.to_str() {
+                                programs.push(name.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    programs.sort();
+    programs.dedup();
+
+    programs
+}
+fn filter_programs(programs: &[String], input: &str) -> Vec<String> {
+    programs
+        .iter()
+        .filter(|p| p.starts_with(input))
+        .take(10)
+        .cloned()
+        .collect()
 }
