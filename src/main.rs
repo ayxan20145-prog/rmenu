@@ -1,3 +1,6 @@
+mod config;
+
+use crate::config::LINES;
 use std::{env, fs, process::Command};
 use x11rb::{
     COPY_FROM_PARENT, CURRENT_TIME, connect,
@@ -23,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         0,
         0,
         screen.width_in_pixels,
-        210,
+        (40 + (LINES as i16) * 18) as u16,
         0,
         WindowClass::INPUT_OUTPUT,
         0,
@@ -207,7 +210,7 @@ fn filter_programs(programs: &[String], input: &str) -> Vec<String> {
     programs
         .iter()
         .filter(|p| p.to_lowercase().contains(&input_lower))
-        .take(10)
+        .take(LINES)
         .cloned()
         .collect()
 }
